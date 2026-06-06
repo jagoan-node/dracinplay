@@ -27,9 +27,9 @@ export default async function GoodShortDetailPage({ params }: GoodShortDetailPag
     notFound();
   }
 
-  const title = detail.bookName || detail.name || detail.title || detail.drama_name || 'Untitled';
-  const coverImage = detail.cover || detail.thumb_url || detail.image || '';
-  const epCount = detail.episode_count || detail.chapterCount || 0;
+  const title = detail.bookName || 'Untitled';
+  const coverImage = detail.cover || '';
+  const epCount = Number(detail.episode_count) || 0;
   const synopsis = cleanSynopsis((detail as any).description || detail.introduction || '');
 
   return (

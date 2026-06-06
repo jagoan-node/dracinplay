@@ -22,9 +22,9 @@ export default async function DramaWaveDetailPage({ params }: DramaWaveDetailPag
     notFound();
   }
 
-  const title = detail.name || detail.title || 'Untitled';
-  const coverImage = detail.cover || detail.image || '';
-  const epCount = detail.episode_count || detail.chapterCount || 0;
+  const title = detail.name || 'Untitled';
+  const coverImage = detail.cover || '';
+  const epCount = Number(detail.episode_count) || 0;
   const synopsis = cleanSynopsis(detail.description || '');
 
   // Try to figure out episode list from available data
