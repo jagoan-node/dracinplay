@@ -1,280 +1,128 @@
+'use client';
+
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import Image from 'next/image';
-import {
-  fetchDramaHome,
-  fetchMeloloHome,
-  fetchFreeReelsHome,
-  fetchDramaBoxHome,
-  formatHits,
-  parseCategories,
-  normalizeShortDramas,
-} from '@/lib/api';
-import DramaCard from '@/components/DramaCard';
 import ShortDramaCard from '@/components/ShortDramaCard';
+import type { NormalizedShortDrama } from '@/lib/api';
 
-const tagColors = [
-  'bg-blue-500/20 text-blue-300',
-  'bg-purple-500/20 text-purple-300',
-  'bg-pink-500/20 text-pink-300',
-  'bg-emerald-500/20 text-emerald-300',
-  'bg-amber-500/20 text-amber-300',
-];
+interface Section {
+  title: string;
+  provider: string;
+  color: string;
+  data: NormalizedShortDrama[];
+}
 
-export default async function HomePage() {
-  let chinaData, koreaData;
+export default function HomePage() {
+  const [sections, setSections] = useState<Section[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  try {
-    chinaData = await fetchDramaHome('china');
-  } catch {
-    chinaData = { status: 0, count: 0, data: [] };
-  }
+  useEffect(() => {
+    async function loadSections() {
+      const sectionConfigs = [
+        { title: '🔥 Melolo Short Drama', provider: 'melolo', color: '#e63946' },
+        { title: '🌊 FreeReels Short Drama', provider: 'freereels', color: '#06b6d4' },
+        { title: '📦 DramaBox', provider: 'dramabox', color: '#a855f7' },
+        { title: '🎬 DramaWave', provider: 'dramawave', color: '#f59e0b' },
+        { title: '✨ DramaNova', provider: 'dramanova', color: '#10b981' },
+        { title: '⭐ GoodShort', provider: 'goodshort', color: '#3b82f6' },
+      ];
 
-  try {
-    koreaData = await fetchDramaHome('korea');
-  } catch {
-    koreaData = { status: 0, count: 0, data: [] };
-  }
+      const results: Section[] = [];
 
-  // Fetch short drama providers
-  let meloloDramas: ReturnType<typeof normalizeShortDramas> = [];
-  let freeReelsDramas: ReturnType<typeof normalizeShortDramas> = [];
-  let dramaBoxDramas: ReturnType<typeof normalizeShortDramas> = [];
+      for (const config of sectionConfigs) {
+        try {
+          const res = await fetch(`/api/home?provider=${config.provider}`);
+          const data = await res.json();
+          if (data.dramas && data.dramas.length > 0) {
+            results.push({
+              title: config.title,
+              provider: config.provider,
+              color: config.color,
+              data: data.dramas.slice(0, 10),
+            });
+          }
+        } catch {
+          // Provider not available
+        }
+      }
 
-  try {
-    const meloloHome = await fetchMeloloHome();
-    const allMeloloBooks = meloloHome.data.flatMap((section) => section.books || []);
-    meloloDramas = normalizeShortDramas(allMeloloBooks, 'melolo').slice(0, 10);
-  } catch {
-    meloloDramas = [];
-  }
-
-  try {
-    const freeReelsHome = await fetchFreeReelsHome();
-    const allFreeReelsBooks = freeReelsHome.data.flatMap((section) => section.books || []);
-    freeReelsDramas = normalizeShortDramas(allFreeReelsBooks, 'freereels').slice(0, 10);
-  } catch {
-    freeReelsDramas = [];
-  }
-
-  try {
-    const dramaBoxHome = await fetchDramaBoxHome();
-    const allDramaBoxBooks = dramaBoxHome.data.columnVoList.flatMap((col) => col.bookList || []);
-    dramaBoxDramas = normalizeShortDramas(allDramaBoxBooks, 'dramabox').slice(0, 10);
-  } catch {
-    dramaBoxDramas = [];
-  }
-
-  const featured = chinaData.data[0];
-  const chinaDramas = chinaData.data.slice(1);
-  const koreaDramas = koreaData.data;
+      setSections(results);
+      setLoading(false);
+    }
+    loadSections();
+  }, []);
 
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen py-6 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
       {/* Hero Section */}
-      {featured && (
-        <section className="relative h-[70vh] min-h-[500px] overflow-hidden">
-          <Image
-            src={featured.image}
-            alt={featured.title}
-            fill
-            className="object-cover"
-            priority
-            sizes="100vw"
-          />
-          <div className="absolute inset-0 bg-gradient-to-t from-[#0a0a0f] via-[#0a0a0f]/60 to-transparent" />
-          <div className="absolute inset-0 bg-gradient-to-r from-[#0a0a0f]/80 to-transparent" />
-          <div className="absolute bottom-0 left-0 right-0 p-8 md:p-16 max-w-7xl mx-auto">
-            <div className="flex items-center gap-2 mb-3">
-              <span className="bg-[#e63946] text-white text-xs px-3 py-1 rounded-full font-semibold">
-                Featured
-              </span>
-              <span className="text-gray-400 text-sm">{formatHits(featured.hits)}</span>
+      <div className="text-center mb-12">
+        <h1 className="text-4xl md:text-5xl font-bold text-white mb-4">
+          Nonton <span className="text-[#e63946]">Drama</span> Gratis
+        </h1>
+        <p className="text-gray-400 text-lg mb-6 max-w-2xl mx-auto">
+          Streaming drama China, Korea, dan Short Drama favorit kamu secara gratis.
+          Kualitas HD, subtitle Indonesia, update setiap hari.
+        </p>
+        <div className="flex flex-wrap justify-center gap-3">
+          <Link
+            href="/short-dramas"
+            className="px-6 py-3 bg-[#e63946] text-white rounded-xl font-medium hover:bg-[#ff4757] transition-all"
+          >
+            🎬 Short Drama
+          </Link>
+          <Link
+            href="/browse"
+            className="px-6 py-3 bg-[#1a1a2e] text-white rounded-xl font-medium border border-white/10 hover:bg-[#252540] transition-all"
+          >
+            📖 Browse Semua
+          </Link>
+        </div>
+      </div>
+
+      {/* Drama Sections */}
+      {loading ? (
+        <div className="space-y-8">
+          {[1, 2, 3].map((i) => (
+            <div key={i} className="animate-pulse">
+              <div className="h-6 bg-[#1a1a2e] rounded w-48 mb-4"></div>
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+                {[1, 2, 3, 4, 5].map((j) => (
+                  <div key={j} className="aspect-[3/4] bg-[#1a1a2e] rounded-xl"></div>
+                ))}
+              </div>
             </div>
-            <h1 className="text-3xl md:text-5xl lg:text-6xl font-bold text-white mb-4 max-w-3xl leading-tight">
-              {featured.title}
-            </h1>
-            <div className="flex flex-wrap gap-2 mb-4">
-              {parseCategories(featured.category).slice(0, 4).map((genre, i) => (
-                <span
-                  key={genre}
-                  className={`text-xs px-3 py-1 rounded-full ${tagColors[i % tagColors.length]}`}
+          ))}
+        </div>
+      ) : sections.length === 0 ? (
+        <div className="text-center py-20">
+          <p className="text-gray-500 text-lg">Tidak ada drama tersedia saat ini.</p>
+          <Link href="/short-dramas" className="text-[#e63946] hover:underline mt-4 inline-block">
+            Lihat Short Drama →
+          </Link>
+        </div>
+      ) : (
+        <div className="space-y-12">
+          {sections.map((section) => (
+            <section key={section.provider}>
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-xl md:text-2xl font-bold text-white">{section.title}</h2>
+                <Link
+                  href={`/short/${section.provider}/all`}
+                  className="text-sm text-gray-400 hover:text-white transition-colors"
                 >
-                  {genre}
-                </span>
-              ))}
-            </div>
-            <Link
-              href={`/drama/${featured.id}`}
-              className="inline-flex items-center gap-2 bg-[#e63946] hover:bg-[#ff4757] text-white px-6 py-3 rounded-full font-semibold transition-all duration-300 hover:scale-105"
-            >
-              <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-                <path
-                  fillRule="evenodd"
-                  d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z"
-                  clipRule="evenodd"
-                />
-              </svg>
-              Watch Now
-            </Link>
-          </div>
-        </section>
-      )}
-
-      {/* China Drama Section */}
-      {chinaDramas.length > 0 && (
-        <section className="py-10 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
-          <div className="flex items-center justify-between mb-6">
-            <h2 className="text-2xl font-bold text-white">
-              Drama China <span className="text-[#e63946]">Terbaru</span>
-            </h2>
-            <Link
-              href="/browse?filter=china"
-              className="text-sm text-gray-400 hover:text-[#e63946] transition-colors flex items-center gap-1"
-            >
-              Lihat Semua
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-              </svg>
-            </Link>
-          </div>
-          <div className="overflow-x-auto hide-scrollbar -mx-4 px-4">
-            <div className="flex gap-4" style={{ minWidth: 'min-content' }}>
-              {chinaDramas.map((drama) => (
-                <div key={drama.id} className="w-[160px] sm:w-[180px] shrink-0">
-                  <DramaCard drama={drama} />
-                </div>
-              ))}
-            </div>
-          </div>
-        </section>
-      )}
-
-      {/* Korea Drama Section */}
-      {koreaDramas.length > 0 && (
-        <section className="py-10 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
-          <div className="flex items-center justify-between mb-6">
-            <h2 className="text-2xl font-bold text-white">
-              Drama Korea <span className="text-[#e63946]">Terbaru</span>
-            </h2>
-            <Link
-              href="/browse?filter=korea"
-              className="text-sm text-gray-400 hover:text-[#e63946] transition-colors flex items-center gap-1"
-            >
-              Lihat Semua
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-              </svg>
-            </Link>
-          </div>
-          <div className="overflow-x-auto hide-scrollbar -mx-4 px-4">
-            <div className="flex gap-4" style={{ minWidth: 'min-content' }}>
-              {koreaDramas.map((drama) => (
-                <div key={drama.id} className="w-[160px] sm:w-[180px] shrink-0">
-                  <DramaCard drama={drama} />
-                </div>
-              ))}
-            </div>
-          </div>
-        </section>
-      )}
-
-      {/* Short Drama: Melolo */}
-      {meloloDramas.length > 0 && (
-        <section className="py-10 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
-          <div className="flex items-center justify-between mb-6">
-            <h2 className="text-2xl font-bold text-white">
-              Short Drama <span className="text-[#e63946]">Melolo</span>
-            </h2>
-            <Link
-              href="/short/melolo/all"
-              className="text-sm text-gray-400 hover:text-[#e63946] transition-colors flex items-center gap-1"
-            >
-              Lihat Semua
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-              </svg>
-            </Link>
-          </div>
-          <div className="overflow-x-auto hide-scrollbar -mx-4 px-4">
-            <div className="flex gap-4" style={{ minWidth: 'min-content' }}>
-              {meloloDramas.map((drama) => (
-                <div key={drama.id} className="w-[160px] sm:w-[180px] shrink-0">
-                  <ShortDramaCard drama={drama} />
-                </div>
-              ))}
-            </div>
-          </div>
-        </section>
-      )}
-
-      {/* Short Drama: FreeReels */}
-      {freeReelsDramas.length > 0 && (
-        <section className="py-10 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
-          <div className="flex items-center justify-between mb-6">
-            <h2 className="text-2xl font-bold text-white">
-              Short Drama <span className="text-cyan-400">FreeReels</span>
-            </h2>
-            <Link
-              href="/short/freereels/all"
-              className="text-sm text-gray-400 hover:text-[#e63946] transition-colors flex items-center gap-1"
-            >
-              Lihat Semua
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-              </svg>
-            </Link>
-          </div>
-          <div className="overflow-x-auto hide-scrollbar -mx-4 px-4">
-            <div className="flex gap-4" style={{ minWidth: 'min-content' }}>
-              {freeReelsDramas.map((drama) => (
-                <div key={drama.id} className="w-[160px] sm:w-[180px] shrink-0">
-                  <ShortDramaCard drama={drama} />
-                </div>
-              ))}
-            </div>
-          </div>
-        </section>
-      )}
-
-      {/* Short Drama: DramaBox */}
-      {dramaBoxDramas.length > 0 && (
-        <section className="py-10 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
-          <div className="flex items-center justify-between mb-6">
-            <h2 className="text-2xl font-bold text-white">
-              Short Drama <span className="text-purple-400">DramaBox</span>
-            </h2>
-            <Link
-              href="/short/dramabox/all"
-              className="text-sm text-gray-400 hover:text-[#e63946] transition-colors flex items-center gap-1"
-            >
-              Lihat Semua
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-              </svg>
-            </Link>
-          </div>
-          <div className="overflow-x-auto hide-scrollbar -mx-4 px-4">
-            <div className="flex gap-4" style={{ minWidth: 'min-content' }}>
-              {dramaBoxDramas.map((drama) => (
-                <div key={drama.id} className="w-[160px] sm:w-[180px] shrink-0">
-                  <ShortDramaCard drama={drama} />
-                </div>
-              ))}
-            </div>
-          </div>
-        </section>
-      )}
-
-      {/* Empty State */}
-      {chinaData.data.length === 0 && koreaData.data.length === 0 && (
-        <div className="flex flex-col items-center justify-center min-h-[60vh] text-center px-4">
-          <div className="w-20 h-20 bg-[#1a1a2e] rounded-full flex items-center justify-center mb-4">
-            <svg className="w-10 h-10 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
-            </svg>
-          </div>
-          <h2 className="text-xl font-semibold text-white mb-2">Tidak ada drama</h2>
-          <p className="text-gray-500">Coba refresh halaman atau cek kembali nanti.</p>
+                  Lihat Semua →
+                </Link>
+              </div>
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+                {section.data.map((drama) => (
+                  <ShortDramaCard
+                    key={drama.id}
+                    drama={drama}
+                  />
+                ))}
+              </div>
+            </section>
+          ))}
         </div>
       )}
     </div>
