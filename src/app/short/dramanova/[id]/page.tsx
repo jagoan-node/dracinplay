@@ -22,7 +22,7 @@ export default async function DramaNovaDetailPage({ params }: DramaNovaDetailPag
   } catch {
     notFound();
   }
-  if (!detail || (!detail.drama_id && !detail.id)) {
+  if (!detail || !detail.drama_id) {
     notFound();
   }
   const coverImage = detail.poster || detail.cover || detail.image || '';
@@ -120,7 +120,7 @@ export default async function DramaNovaDetailPage({ params }: DramaNovaDetailPag
               {Array.from({ length: epCount }, (_, i) => i + 1).map((ep) => (
                 <Link
                   key={ep}
-                  href={`/short/dramanova/watch/${detail.drama_id || detail.id}/${ep}`}
+                  href={`/short/dramanova/watch/${detail.drama_id}/${ep}`}
                   className="flex items-center justify-center py-3 px-3 rounded-lg text-sm font-medium bg-[#1a1a2e] text-gray-400 hover:text-white hover:bg-[#252540] border border-white/10 transition-all"
                 >
                   {ep}
