@@ -101,57 +101,32 @@ export default function DramaWaveWatchPage() {
 
   // Subtitle handler – attach/remove subtitle track when user changes selection
   useEffect(() => {
-    const hls = hlsRef.current;
     const video = videoRef.current;
-    if (!hls && !video) return;
+    if (!video) return;
 
-    // Remove any previously added text tracks
-    if (video) {
-      const existingTracks = Array.from(video.textTracks);
-      for (let i = existingTracks.length - 1; i >= 0; i--) {
-        video.removeRemoteTextTrack(video.textTracks[i] as unknown as HTMLTrackElement);
-      }
-    }
+    // Remove existing track elements
+    const existing = video.querySelectorAll('track');
+    existing.forEach((t) => t.remove());
 
     if (!selectedSubtitle || !streamData) return;
 
     const sub = streamData.subtitle_list?.find((s) => s.language === selectedSubtitle);
-    if (!sub) return;
+    if (!sub || !sub.vtt) return;
 
-    const vttUrl = sub.vtt;
-    if (!vttUrl) return;
+    // Add subtitle track element
+    const trackEl = document.createElement('track');
+    trackEl.kind = 'subtitles';
+    trackEl.src = sub.vtt;
+    trackEl.srclang = sub.language;
+    trackEl.label = sub.display_name;
+    trackEl.default = true;
+    video.appendChild(trackEl);
 
-    if (hls && Hls.isSupported()) {
-      hls.addSubtitleTrack({
-        kind: 'subtitles',
-        src: vttUrl,
-        label: sub.display_name,
-        language: sub.language,
-        default: true,
-      });
-      // Enable the newly added track
-      const tracks = hls.subtitleTracks;
-      if (tracks.length > 0) {
-        hls.subtitleTrack = tracks.length - 1;
-        hls.subtitleDisplay = true;
-      }
-    } else {
-      // Native HLS (Safari) – add track element manually
-      const trackEl = document.createElement('track');
-      trackEl.kind = 'subtitles';
-      trackEl.src = vttUrl;
-      trackEl.srclang = sub.language;
-      trackEl.label = sub.display_name;
-      trackEl.default = true;
-      video!.appendChild(trackEl);
-      // Enable last track
-      const tracks = Array.from(video!.textTracks);
-      for (const t of tracks) {
-        t.mode = 'disabled';
-      }
-      if (tracks.length > 0) {
-        tracks[tracks.length - 1].mode = 'showing';
-      }
+    // Enable the last added track
+    const tracks = Array.from(video.textTracks);
+    tracks.forEach((t) => { t.mode = 'disabled'; });
+    if (tracks.length > 0) {
+      tracks[tracks.length - 1].mode = 'showing';
     }
   }, [selectedSubtitle, streamData]);
 
