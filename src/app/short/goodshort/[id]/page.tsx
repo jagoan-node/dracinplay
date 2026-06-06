@@ -13,19 +13,24 @@ export default async function GoodShortDetailPage({ params }: GoodShortDetailPag
   let detail;
   try {
     const res = await fetchGoodShortDetail(id);
-    detail = res.data;
+    const book = res.data?.book || {};
+    detail = {
+      ...book,
+      episode_count: book.chapterCount || 0,
+      episode_list: res.data?.downloadList || [],
+    };
   } catch {
     notFound();
   }
 
-  if (!detail || !detail.id) {
+  if (!detail || !detail.bookId) {
     notFound();
   }
 
-  const title = detail.name || detail.title || detail.drama_name || 'Untitled';
+  const title = detail.bookName || detail.name || detail.title || detail.drama_name || 'Untitled';
   const coverImage = detail.cover || detail.thumb_url || detail.image || '';
   const epCount = detail.episode_count || detail.chapterCount || 0;
-  const synopsis = cleanSynopsis(detail.description || '');
+  const synopsis = cleanSynopsis((detail as any).description || detail.introduction || '');
 
   return (
     <div className="min-h-screen">
@@ -84,9 +89,9 @@ export default async function GoodShortDetailPage({ params }: GoodShortDetailPag
               )}
             </div>
 
-            {detail.tags && Array.isArray(detail.tags) && detail.tags.length > 0 && (
+            {detail.labels && Array.isArray(detail.labels) && detail.labels.length > 0 && (
               <div className="flex flex-wrap gap-2 mb-6">
-                {detail.tags.map((tag: string) => (
+                {detail.labels.map((tag: string) => (
                   <span
                     key={tag}
                     className="text-xs px-3 py-1 rounded-full bg-blue-500/20 text-blue-300 border border-blue-500/30"
@@ -113,13 +118,13 @@ export default async function GoodShortDetailPage({ params }: GoodShortDetailPag
               Episodes <span className="text-gray-500 text-lg font-normal">({epCount})</span>
             </h2>
             <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-2">
-              {Array.from({ length: epCount }, (_, i) => i + 1).map((ep) => (
+              {detail.episode_list.map((ep: any) => (
                 <Link
-                  key={ep}
-                  href={`/short/goodshort/watch/${detail.id}/${ep}`}
+                  key={ep.index}
+                  href={`/short/goodshort/watch/${detail.bookId}/${ep.index + 1}`}
                   className="flex items-center justify-center py-3 px-3 rounded-lg text-sm font-medium bg-[#1a1a2e] text-gray-400 hover:text-white hover:bg-[#252540] border border-white/10 transition-all"
                 >
-                  {ep}
+                  {ep.chapterName || ep.index + 1}
                 </Link>
               ))}
             </div>

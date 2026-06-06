@@ -13,17 +13,21 @@ export default async function DramaNovaDetailPage({ params }: DramaNovaDetailPag
   let detail;
   try {
     const res = await fetchDramaNovaDetail(id);
-    detail = res.data;
+    const info = res.data?.info || {};
+    detail = {
+      ...info,
+      episode_count: info.total_episodes || res.data?.episode_count || 0,
+      episode_list: res.data?.episodes || [],
+    };
   } catch {
     notFound();
   }
-
-  if (!detail || !detail.id) {
+  if (!detail || (!detail.drama_id && !detail.id)) {
     notFound();
   }
+  const coverImage = detail.poster || detail.cover || detail.image || '';
 
   const title = detail.name || detail.title || 'Untitled';
-  const coverImage = detail.cover || detail.image || '';
   const epCount = detail.episode_count || detail.chapterCount || 0;
   const synopsis = cleanSynopsis(detail.description || '');
 
@@ -116,7 +120,7 @@ export default async function DramaNovaDetailPage({ params }: DramaNovaDetailPag
               {Array.from({ length: epCount }, (_, i) => i + 1).map((ep) => (
                 <Link
                   key={ep}
-                  href={`/short/dramanova/watch/${detail.id}/${ep}`}
+                  href={`/short/dramanova/watch/${detail.drama_id || detail.id}/${ep}`}
                   className="flex items-center justify-center py-3 px-3 rounded-lg text-sm font-medium bg-[#1a1a2e] text-gray-400 hover:text-white hover:bg-[#252540] border border-white/10 transition-all"
                 >
                   {ep}

@@ -305,25 +305,28 @@ export interface DramaBoxChapterItem {
   [key: string]: unknown;
 }
 
-export interface DramaBoxDetail {
+export interface DramaBoxDetailInfo {
   bookId: string;
   bookName: string;
   bookCover: string;
   introduction: string;
-  playCount: number;
-  tags: string[];
   chapterCount: number;
-  firstPlaySourceVo: unknown;
+  playCount?: number;
+  tags?: string[];
+  chapterList?: DramaBoxChapterItem[];
+  firstPlaySourceVo?: unknown;
   [key: string]: unknown;
 }
 
 export interface DramaBoxDetailResponse {
-  data: DramaBoxDetail;
+  data: DramaBoxDetailInfo;
 }
 
 export interface DramaBoxStreamResponse {
+  data: {
   chapterList: DramaBoxChapterItem[];
   [key: string]: unknown;
+  };
 }
 
 export async function fetchDramaBoxHome(): Promise<DramaBoxHomeResponse> {
@@ -333,13 +336,13 @@ export async function fetchDramaBoxHome(): Promise<DramaBoxHomeResponse> {
 }
 
 export async function fetchDramaBoxDetail(id: string): Promise<DramaBoxDetailResponse> {
-  const res = await fetch(`${API_BASE}/dramabox/detail?id=${id}`, { next: { revalidate: 3600 } });
+  const res = await fetch(`${API_BASE}/dramabox/detail?bookId=${id}`, { next: { revalidate: 3600 } });
   if (!res.ok) throw new Error('Failed to fetch DramaBox detail');
   return res.json();
 }
 
-export async function fetchDramaBoxStream(id: string, episode: number): Promise<DramaBoxStreamResponse> {
-  const res = await fetch(`${API_BASE}/dramabox/stream?id=${id}&episode=${episode}`, { next: { revalidate: 3600 } });
+export async function fetchDramaBoxStream(bookId: string, chapterIndex: number): Promise<DramaBoxStreamResponse> {
+  const res = await fetch(`${API_BASE}/dramabox/stream?bookId=${bookId}&chapterIndex=${chapterIndex}`, { next: { revalidate: 3600 } });
   if (!res.ok) throw new Error('Failed to fetch DramaBox stream');
   return res.json();
 }
@@ -372,24 +375,25 @@ export interface DramaWaveHomeResponse {
   data: DramaWaveHomeData;
 }
 
-export interface DramaWaveDetail {
+export interface DramaWaveInfo {
   id: string;
-  name?: string;
+  name: string;
   title?: string;
-  cover?: string;
+  cover: string;
   image?: string;
-  description?: string;
-  episode_count?: number;
-  chapterCount?: number;
+  description: string;
+  episode_count: number;
+  episode_list: Array<{ id: string; index: number; [key: string]: unknown }>;
   tags?: string[];
-  video_list?: Array<{ episode: number; video_id: string; [key: string]: unknown }>;
-  episode_list?: Array<{ episode: number; episode_id: string; [key: string]: unknown }>;
-  chapterList?: Array<{ chapterNum?: number; [key: string]: unknown }>;
   [key: string]: unknown;
 }
 
 export interface DramaWaveDetailResponse {
-  data: DramaWaveDetail;
+  code: number;
+  data: {
+    info: DramaWaveInfo;
+    [key: string]: unknown;
+  };
 }
 
 export interface DramaWaveStreamResponse {
@@ -443,24 +447,24 @@ export interface DramaNovaHomeResponse {
   data: DramaNovaHomeData;
 }
 
-export interface DramaNovaDetail {
-  id: string;
-  name?: string;
-  title?: string;
-  cover?: string;
-  image?: string;
-  description?: string;
-  episode_count?: number;
-  chapterCount?: number;
+export interface DramaNovaInfo {
+  drama_id: string;
+  title: string;
+  description: string;
+  poster: string;
+  total_episodes: number;
   tags?: string[];
-  video_list?: Array<{ episode: number; video_id: string; [key: string]: unknown }>;
-  episode_list?: Array<{ episode: number; episode_id: string; [key: string]: unknown }>;
-  chapterList?: Array<{ chapterNum?: number; [key: string]: unknown }>;
   [key: string]: unknown;
 }
 
 export interface DramaNovaDetailResponse {
-  data: DramaNovaDetail;
+  code: number;
+  data: {
+    info: DramaNovaInfo;
+    episodes: Array<{ episode_number: number; [key: string]: unknown }>;
+    episode_count: number;
+    [key: string]: unknown;
+  };
 }
 
 export interface DramaNovaStreamResponse {
@@ -519,34 +523,43 @@ export interface GoodShortHomeResponse {
   data: GoodShortHomeData;
 }
 
-export interface GoodShortDetail {
+export interface GoodShortBook {
+  bookId: string;
+  bookName: string;
+  cover: string;
+  introduction: string;
+  chapterCount: number;
+  labels: string[];
+  [key: string]: unknown;
+}
+
+export interface GoodShortDownloadItem {
   id: string;
-  name?: string;
-  title?: string;
-  drama_name?: string;
-  cover?: string;
-  thumb_url?: string;
-  image?: string;
-  description?: string;
-  episode_count?: number;
-  chapterCount?: number;
-  tags?: string[];
-  video_list?: Array<{ episode: number; video_id: string; [key: string]: unknown }>;
-  episode_list?: Array<{ episode: number; episode_id: string; [key: string]: unknown }>;
-  chapterList?: Array<{ chapterNum?: number; [key: string]: unknown }>;
+  index: number;
+  chapterName: string;
+  multiVideos: Array<{ type: string; filePath: string; [key: string]: unknown }>;
   [key: string]: unknown;
 }
 
 export interface GoodShortDetailResponse {
-  data: GoodShortDetail;
+  code: number;
+  data: {
+    book: GoodShortBook;
+    downloadList: GoodShortDownloadItem[];
+    [key: string]: unknown;
+  };
 }
 
 export interface GoodShortStreamResponse {
+  code: number;
   data: {
-    video_url?: string;
-    m3u8_url?: string;
-    h264_m3u8?: string;
-    url?: string;
+    bookId: string;
+    bookName: string;
+    downloadList: Array<{
+      index: number;
+      multiVideos: Array<{ type: string; filePath: string; [key: string]: unknown }>;
+      [key: string]: unknown;
+    }>;
     [key: string]: unknown;
   };
 }
@@ -557,14 +570,14 @@ export async function fetchGoodShortHome(): Promise<GoodShortHomeResponse> {
   return res.json();
 }
 
-export async function fetchGoodShortDetail(id: string): Promise<GoodShortDetailResponse> {
-  const res = await fetch(`${API_BASE}/goodshort/detail?id=${id}`, { next: { revalidate: 3600 } });
+export async function fetchGoodShortDetail(bookId: string): Promise<GoodShortDetailResponse> {
+  const res = await fetch(`${API_BASE}/goodshort/detail?bookId=${bookId}`, { next: { revalidate: 3600 } });
   if (!res.ok) throw new Error('Failed to fetch GoodShort detail');
   return res.json();
 }
 
-export async function fetchGoodShortStream(id: string, episode: number): Promise<GoodShortStreamResponse> {
-  const res = await fetch(`${API_BASE}/goodshort/stream?id=${id}&episode=${episode}`, { next: { revalidate: 3600 } });
+export async function fetchGoodShortStream(bookId: string, chapterIndex: number): Promise<GoodShortStreamResponse> {
+  const res = await fetch(`${API_BASE}/goodshort/stream?bookId=${bookId}&chapterIndex=${chapterIndex}`, { next: { revalidate: 3600 } });
   if (!res.ok) throw new Error('Failed to fetch GoodShort stream');
   return res.json();
 }

@@ -5,12 +5,21 @@ import { useParams } from 'next/navigation';
 import Link from 'next/link';
 import Hls from 'hls.js';
 
-interface StreamData {
-  video_url?: string;
-  m3u8_url?: string;
-  h264_m3u8?: string;
-  url?: string;
-  [key: string]: unknown;
+interface MultiVideo {
+  type: string;
+  filePath: string;
+}
+
+interface DownloadEntry {
+  index: number;
+  chapterName: string;
+  multiVideos: MultiVideo[];
+}
+
+interface StreamApiResponse {
+  bookId: string;
+  bookName: string;
+  downloadList: DownloadEntry[];
 }
 
 export default function GoodShortWatchPage() {
@@ -18,21 +27,32 @@ export default function GoodShortWatchPage() {
   const { id, episode } = params as { id: string; episode: string };
   const videoRef = useRef<HTMLVideoElement>(null);
 
-  const [streamData, setStreamData] = useState<StreamData | null>(null);
+  const [streamUrl, setStreamUrl] = useState('');
+  const [bookName, setBookName] = useState('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
   const ep = parseInt(episode, 10);
+  const chapterIndex = ep - 1; // 0-based
 
   useEffect(() => {
     async function loadStream() {
       setLoading(true);
       setError('');
+      setStreamUrl('');
       try {
-        const res = await fetch(`https://api.sonzaix.indevs.in/goodshort/stream?id=${id}&episode=${episode}`);
-        const data = await res.json();
-        if (data.data) {
-          setStreamData(data.data);
+        const res = await fetch(`https://api.sonzaix.indevs.in/goodshort/stream?bookId=${id}&chapterIndex=${chapterIndex}`);
+        const json = await res.json();
+        const apiData: StreamApiResponse | undefined = json.data;
+        if (apiData?.downloadList?.length) {
+          const entry = apiData.downloadList.find((d) => d.index === chapterIndex) ?? apiData.downloadList[0];
+          const filePath = entry?.multiVideos?.[0]?.filePath;
+          if (filePath) {
+            setStreamUrl(filePath);
+            setBookName(apiData.bookName || 'GoodShort Drama');
+          } else {
+            setError('No video URL found for this episode');
+          }
         } else {
           setError('Stream not available');
         }
@@ -42,18 +62,11 @@ export default function GoodShortWatchPage() {
       setLoading(false);
     }
     loadStream();
-  }, [id, episode]);
+  }, [id, chapterIndex]);
 
   useEffect(() => {
-    if (!streamData || !videoRef.current) return;
+    if (!streamUrl || !videoRef.current) return;
     const video = videoRef.current;
-
-    const streamUrl = streamData.h264_m3u8 || streamData.m3u8_url || streamData.video_url || streamData.url || '';
-
-    if (!streamUrl) {
-      setError('No stream URL available');
-      return;
-    }
 
     if (streamUrl.includes('.m3u8') && Hls.isSupported()) {
       const hls = new Hls();
@@ -71,7 +84,7 @@ export default function GoodShortWatchPage() {
     } else {
       video.src = streamUrl;
     }
-  }, [streamData]);
+  }, [streamUrl]);
 
   return (
     <div className="min-h-screen py-6 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
@@ -85,7 +98,7 @@ export default function GoodShortWatchPage() {
         <span className="text-white">Episode {episode}</span>
       </nav>
 
-      <h1 className="text-xl md:text-2xl font-bold text-white mb-1">GoodShort Drama</h1>
+      <h1 className="text-xl md:text-2xl font-bold text-white mb-1">{bookName || 'GoodShort Drama'}</h1>
       <p className="text-gray-500 text-sm mb-6">Episode {episode}</p>
 
       <div className="relative w-full aspect-video bg-black rounded-xl overflow-hidden mb-6 shadow-2xl shadow-black/50">

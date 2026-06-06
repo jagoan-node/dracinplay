@@ -6,10 +6,18 @@ import Link from 'next/link';
 import Hls from 'hls.js';
 
 interface StreamData {
-  video_url?: string;
-  m3u8_url?: string;
-  h264_m3u8?: string;
-  url?: string;
+  drama_id?: string;
+  drama_name?: string;
+  episode?: number;
+  play?: {
+    video_url?: string;
+    backup_url?: string;
+    definition?: string;
+    duration?: number;
+  };
+  info?: {
+    subtitle_tracks?: Array<{ language: string; label: string }>;
+  };
   [key: string]: unknown;
 }
 
@@ -29,7 +37,7 @@ export default function DramaNovaWatchPage() {
       setLoading(true);
       setError('');
       try {
-        const res = await fetch(`https://api.sonzaix.indevs.in/dramanova/stream?id=${id}&episode=${episode}`);
+        const res = await fetch(`https://api.sonzaix.indevs.in/dramanova/stream?dramaId=${id}&episode=${episode}`);
         const data = await res.json();
         if (data.data) {
           setStreamData(data.data);
@@ -48,29 +56,56 @@ export default function DramaNovaWatchPage() {
     if (!streamData || !videoRef.current) return;
     const video = videoRef.current;
 
-    const streamUrl = streamData.h264_m3u8 || streamData.m3u8_url || streamData.video_url || streamData.url || '';
-
-    if (!streamUrl) {
+    const primaryUrl = streamData.play?.video_url;
+    const backupUrl = streamData.play?.backup_url;
+    if (!primaryUrl && !backupUrl) {
       setError('No stream URL available');
       return;
     }
 
-    if (streamUrl.includes('.m3u8') && Hls.isSupported()) {
-      const hls = new Hls();
-      hls.loadSource(streamUrl);
-      hls.attachMedia(video);
-      hls.on(Hls.Events.ERROR, (_, data) => {
-        if (data.fatal) {
-          console.error('HLS fatal error', data);
-          setError('Stream playback error');
+    let destroyed = false;
+
+    function tryUrl(url: string, isRetry: boolean) {
+      const proxiedUrl = '/api/proxy?url=' + encodeURIComponent(url);
+      const isM3u8 = url.includes('.m3u8');
+
+      if (isM3u8 && Hls.isSupported()) {
+        const hls = new Hls();
+        hls.loadSource(proxiedUrl);
+        hls.attachMedia(video);
+        hls.on(Hls.Events.ERROR, (_, data) => {
+          if (data.fatal && !destroyed) {
+            console.error('HLS fatal error', data);
+            if (!isRetry && backupUrl) {
+              tryUrl(backupUrl, true);
+            } else {
+              setError('Stream playback error');
+            }
+          }
+        });
+        return () => { hls.destroy(); };
+      } else if (isM3u8 && video.canPlayType('application/vnd.apple.mpegurl')) {
+        video.src = proxiedUrl;
+      } else {
+        // Direct MP4 playback via CORS proxy
+        video.src = proxiedUrl;
+        if (!isRetry && backupUrl) {
+          video.onerror = () => {
+            video.onerror = null;
+            console.warn('Primary video failed, trying backup URL');
+            tryUrl(backupUrl, true);
+          };
         }
-      });
-      return () => { hls.destroy(); };
-    } else if (streamUrl.includes('.m3u8') && video.canPlayType('application/vnd.apple.mpegurl')) {
-      video.src = streamUrl;
-    } else {
-      video.src = streamUrl;
+      }
     }
+
+    if (primaryUrl) {
+      tryUrl(primaryUrl, false);
+    } else {
+      tryUrl(backupUrl!, true);
+    }
+
+    return () => { destroyed = true; };
   }, [streamData]);
 
   return (

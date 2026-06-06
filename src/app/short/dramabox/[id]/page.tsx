@@ -1,6 +1,5 @@
 import { notFound } from 'next/navigation';
 import Image from 'next/image';
-import Link from 'next/link';
 import { fetchDramaBoxDetail, cleanSynopsis } from '@/lib/api';
 
 interface DramaBoxDetailPageProps {
@@ -81,7 +80,7 @@ export default async function DramaBoxDetailPage({ params }: DramaBoxDetailPageP
                   {detail.chapterCount} Episodes
                 </span>
               )}
-              {detail.playCount > 0 && (
+              {detail.playCount != null && detail.playCount > 0 && (
                 <span className="flex items-center gap-1">
                   <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
                     <path d="M10 12a2 2 0 100-4 2 2 0 000 4z" />
@@ -113,37 +112,36 @@ export default async function DramaBoxDetailPage({ params }: DramaBoxDetailPageP
               </div>
             )}
 
-            {/* Watch First Episode Button */}
-            <Link
-              href={`/short/dramabox/watch/${detail.bookId}/1`}
-              className="inline-flex items-center gap-2 bg-purple-500 hover:bg-purple-600 text-white px-6 py-3 rounded-full font-semibold transition-all duration-300 hover:scale-105"
-            >
-              <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-                <path
-                  fillRule="evenodd"
-                  d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z"
-                  clipRule="evenodd"
-                />
-              </svg>
-              Watch Now
-            </Link>
           </div>
         </div>
 
-        {/* Episode List */}
-        <section className="mt-12">
+        {/* Streaming Notice */}
+        <div className="mt-8 bg-yellow-500/10 border border-yellow-500/30 rounded-xl p-6 text-center">
+          <div className="flex items-center justify-center gap-2 mb-2">
+            <svg className="w-5 h-5 text-yellow-500" fill="currentColor" viewBox="0 0 20 20">
+              <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+            </svg>
+            <span className="text-yellow-500 font-semibold">Streaming Belum Tersedia</span>
+          </div>
+          <p className="text-gray-400 text-sm">
+            Provider DramaBox saat ini belum mendukung streaming video.{' '}
+            Coba tonton drama lain dari provider FreeReels, DramaWave, DramaNova, atau GoodShort.
+          </p>
+        </div>
+
+        {/* Episode Info */}
+        <section className="mt-8">
           <h2 className="text-2xl font-bold text-white mb-6">
-            Episodes <span className="text-gray-500 text-lg font-normal">({detail.chapterCount})</span>
+            Daftar Episode <span className="text-gray-500 text-lg font-normal">({detail.chapterCount} episode)</span>
           </h2>
           <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-2">
             {Array.from({ length: detail.chapterCount }, (_, i) => i + 1).map((ep) => (
-              <Link
+              <div
                 key={ep}
-                href={`/short/dramabox/watch/${detail.bookId}/${ep}`}
-                className="flex items-center justify-center py-3 px-3 rounded-lg text-sm font-medium bg-[#1a1a2e] text-gray-400 hover:text-white hover:bg-[#252540] border border-white/10 transition-all"
+                className="flex items-center justify-center py-3 px-3 rounded-lg text-sm font-medium bg-[#1a1a2e]/50 text-gray-600 border border-white/5"
               >
                 {ep}
-              </Link>
+              </div>
             ))}
           </div>
         </section>

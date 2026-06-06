@@ -13,7 +13,7 @@ export default async function DramaWaveDetailPage({ params }: DramaWaveDetailPag
   let detail;
   try {
     const res = await fetchDramaWaveDetail(id);
-    detail = res.data;
+    detail = res.data?.info || res.data;
   } catch {
     notFound();
   }
@@ -29,7 +29,7 @@ export default async function DramaWaveDetailPage({ params }: DramaWaveDetailPag
 
   // Try to figure out episode list from available data
   const videoList = detail.video_list || [];
-  const episodeList = detail.episode_list || [];
+  const episodeList = (detail.episode_list || []) as { id: string; index: number }[];
   const chapterList = detail.chapterList || [];
 
   return (
@@ -118,7 +118,10 @@ export default async function DramaWaveDetailPage({ params }: DramaWaveDetailPag
               Episodes <span className="text-gray-500 text-lg font-normal">({epCount})</span>
             </h2>
             <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-2">
-              {Array.from({ length: epCount }, (_, i) => i + 1).map((ep) => (
+              {(episodeList.length > 0
+                ? episodeList.map((ep) => ep.index)
+                : Array.from({ length: epCount }, (_, i) => i + 1)
+              ).map((ep) => (
                 <Link
                   key={ep}
                   href={`/short/dramawave/watch/${detail.id}/${ep}`}

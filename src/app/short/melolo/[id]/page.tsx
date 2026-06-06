@@ -1,6 +1,5 @@
 import { notFound } from 'next/navigation';
 import Image from 'next/image';
-import Link from 'next/link';
 import { fetchMeloloDetail } from '@/lib/api';
 
 interface MeloloDetailPageProps {
@@ -92,58 +91,58 @@ export default async function MeloloDetailPage({ params }: MeloloDetailPageProps
           </div>
         </div>
 
-        {/* Episodes */}
+        {/* Streaming Notice */}
+        <div className="mt-8 bg-yellow-500/10 border border-yellow-500/30 rounded-xl p-6 text-center">
+          <div className="flex items-center justify-center gap-2 mb-2">
+            <svg className="w-5 h-5 text-yellow-500" fill="currentColor" viewBox="0 0 20 20">
+              <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+            </svg>
+            <span className="text-yellow-500 font-semibold">Streaming Belum Tersedia</span>
+          </div>
+          <p className="text-gray-400 text-sm">
+            Provider Melolo saat ini belum mendukung streaming video.{' '}
+            Coba tonton drama lain dari provider FreeReels, DramaWave, DramaNova, atau GoodShort.
+          </p>
+        </div>
+
+        {/* Episodes Info */}
         {detail.video_list && detail.video_list.length > 0 && (
-          <section className="mt-12">
+          <section className="mt-8">
             <h2 className="text-2xl font-bold text-white mb-6">
-              Episodes <span className="text-gray-500 text-lg font-normal">({detail.video_list.length})</span>
+              Daftar Episode <span className="text-gray-500 text-lg font-normal">({detail.video_list.length} episode)</span>
             </h2>
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
               {detail.video_list.map((ep) => (
-                <Link
+                <div
                   key={ep.video_id}
-                  href={`/short/melolo/watch/${ep.video_id}`}
-                  className="group block"
+                  className="bg-[#1a1a2e] rounded-xl overflow-hidden opacity-60"
                 >
-                  <div className="bg-[#1a1a2e] rounded-xl overflow-hidden transition-all duration-300 hover:scale-[1.03] hover:shadow-xl hover:shadow-black/40">
-                    <div className="relative aspect-video overflow-hidden">
-                      {ep.cover ? (
-                        <Image
-                          src={ep.cover}
-                          alt={`Episode ${ep.episode}`}
-                          fill
-                          className="object-cover transition-transform duration-500 group-hover:scale-110"
-                          sizes="(max-width: 640px) 50vw, (max-width: 768px) 33vw, 20vw"
-                        />
-                      ) : (
-                        <div className="absolute inset-0 bg-[#252540] flex items-center justify-center">
-                          <svg className="w-10 h-10 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
-                          </svg>
-                        </div>
-                      )}
-                      <div className="absolute inset-0 bg-black/20 group-hover:bg-black/10 transition-colors flex items-center justify-center">
-                        <div className="w-10 h-10 bg-[#e63946]/90 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                          <svg className="w-5 h-5 text-white ml-0.5" fill="currentColor" viewBox="0 0 20 20">
-                            <path
-                              fillRule="evenodd"
-                              d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z"
-                              clipRule="evenodd"
-                            />
-                          </svg>
-                        </div>
+                  <div className="relative aspect-video overflow-hidden">
+                    {ep.cover ? (
+                      <Image
+                        src={ep.cover}
+                        alt={`Episode ${ep.episode}`}
+                        fill
+                        className="object-cover"
+                        sizes="(max-width: 640px) 50vw, (max-width: 768px) 33vw, 20vw"
+                      />
+                    ) : (
+                      <div className="absolute inset-0 bg-[#252540] flex items-center justify-center">
+                        <svg className="w-10 h-10 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
+                        </svg>
                       </div>
-                    </div>
-                    <div className="p-3">
-                      <h3 className="text-sm font-semibold text-white group-hover:text-[#e63946] transition-colors">
-                        Episode {ep.episode}
-                      </h3>
-                      {ep.duration && (
-                        <p className="text-[10px] text-gray-500 mt-1">{ep.duration}</p>
-                      )}
-                    </div>
+                    )}
                   </div>
-                </Link>
+                  <div className="p-3">
+                    <h3 className="text-sm font-semibold text-gray-300">
+                      Episode {ep.episode}
+                    </h3>
+                    {ep.duration && (
+                      <p className="text-[10px] text-gray-500 mt-1">{ep.duration}</p>
+                    )}
+                  </div>
+                </div>
               ))}
             </div>
           </section>
