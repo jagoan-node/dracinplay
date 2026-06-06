@@ -9,6 +9,7 @@ const navLinks = [
   { href: '/browse', label: 'Browse' },
   { href: '/browse?filter=china', label: 'China' },
   { href: '/browse?filter=korea', label: 'Korea' },
+  { href: '/short-dramas', label: 'Short Drama' },
 ];
 
 export default function Navbar() {

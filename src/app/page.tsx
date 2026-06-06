@@ -1,7 +1,16 @@
 import Link from 'next/link';
 import Image from 'next/image';
-import { fetchDramaHome, formatHits, parseCategories } from '@/lib/api';
+import {
+  fetchDramaHome,
+  fetchMeloloHome,
+  fetchFreeReelsHome,
+  fetchDramaBoxHome,
+  formatHits,
+  parseCategories,
+  normalizeShortDramas,
+} from '@/lib/api';
 import DramaCard from '@/components/DramaCard';
+import ShortDramaCard from '@/components/ShortDramaCard';
 
 const tagColors = [
   'bg-blue-500/20 text-blue-300',
@@ -24,6 +33,35 @@ export default async function HomePage() {
     koreaData = await fetchDramaHome('korea');
   } catch {
     koreaData = { status: 0, count: 0, data: [] };
+  }
+
+  // Fetch short drama providers
+  let meloloDramas: ReturnType<typeof normalizeShortDramas> = [];
+  let freeReelsDramas: ReturnType<typeof normalizeShortDramas> = [];
+  let dramaBoxDramas: ReturnType<typeof normalizeShortDramas> = [];
+
+  try {
+    const meloloHome = await fetchMeloloHome();
+    const allMeloloBooks = meloloHome.data.flatMap((section) => section.books || []);
+    meloloDramas = normalizeShortDramas(allMeloloBooks, 'melolo').slice(0, 10);
+  } catch {
+    meloloDramas = [];
+  }
+
+  try {
+    const freeReelsHome = await fetchFreeReelsHome();
+    const allFreeReelsBooks = freeReelsHome.data.flatMap((section) => section.books || []);
+    freeReelsDramas = normalizeShortDramas(allFreeReelsBooks, 'freereels').slice(0, 10);
+  } catch {
+    freeReelsDramas = [];
+  }
+
+  try {
+    const dramaBoxHome = await fetchDramaBoxHome();
+    const allDramaBoxBooks = dramaBoxHome.data.columnVoList.flatMap((col) => col.bookList || []);
+    dramaBoxDramas = normalizeShortDramas(allDramaBoxBooks, 'dramabox').slice(0, 10);
+  } catch {
+    dramaBoxDramas = [];
   }
 
   const featured = chinaData.data[0];
@@ -133,6 +171,93 @@ export default async function HomePage() {
               {koreaDramas.map((drama) => (
                 <div key={drama.id} className="w-[160px] sm:w-[180px] shrink-0">
                   <DramaCard drama={drama} />
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* Short Drama: Melolo */}
+      {meloloDramas.length > 0 && (
+        <section className="py-10 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
+          <div className="flex items-center justify-between mb-6">
+            <h2 className="text-2xl font-bold text-white">
+              Short Drama <span className="text-[#e63946]">Melolo</span>
+            </h2>
+            <Link
+              href="/short/melolo/all"
+              className="text-sm text-gray-400 hover:text-[#e63946] transition-colors flex items-center gap-1"
+            >
+              Lihat Semua
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+              </svg>
+            </Link>
+          </div>
+          <div className="overflow-x-auto hide-scrollbar -mx-4 px-4">
+            <div className="flex gap-4" style={{ minWidth: 'min-content' }}>
+              {meloloDramas.map((drama) => (
+                <div key={drama.id} className="w-[160px] sm:w-[180px] shrink-0">
+                  <ShortDramaCard drama={drama} />
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* Short Drama: FreeReels */}
+      {freeReelsDramas.length > 0 && (
+        <section className="py-10 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
+          <div className="flex items-center justify-between mb-6">
+            <h2 className="text-2xl font-bold text-white">
+              Short Drama <span className="text-cyan-400">FreeReels</span>
+            </h2>
+            <Link
+              href="/short/freereels/all"
+              className="text-sm text-gray-400 hover:text-[#e63946] transition-colors flex items-center gap-1"
+            >
+              Lihat Semua
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+              </svg>
+            </Link>
+          </div>
+          <div className="overflow-x-auto hide-scrollbar -mx-4 px-4">
+            <div className="flex gap-4" style={{ minWidth: 'min-content' }}>
+              {freeReelsDramas.map((drama) => (
+                <div key={drama.id} className="w-[160px] sm:w-[180px] shrink-0">
+                  <ShortDramaCard drama={drama} />
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* Short Drama: DramaBox */}
+      {dramaBoxDramas.length > 0 && (
+        <section className="py-10 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
+          <div className="flex items-center justify-between mb-6">
+            <h2 className="text-2xl font-bold text-white">
+              Short Drama <span className="text-purple-400">DramaBox</span>
+            </h2>
+            <Link
+              href="/short/dramabox/all"
+              className="text-sm text-gray-400 hover:text-[#e63946] transition-colors flex items-center gap-1"
+            >
+              Lihat Semua
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+              </svg>
+            </Link>
+          </div>
+          <div className="overflow-x-auto hide-scrollbar -mx-4 px-4">
+            <div className="flex gap-4" style={{ minWidth: 'min-content' }}>
+              {dramaBoxDramas.map((drama) => (
+                <div key={drama.id} className="w-[160px] sm:w-[180px] shrink-0">
+                  <ShortDramaCard drama={drama} />
                 </div>
               ))}
             </div>
