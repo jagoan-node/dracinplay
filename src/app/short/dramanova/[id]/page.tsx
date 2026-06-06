@@ -25,10 +25,10 @@ export default async function DramaNovaDetailPage({ params }: DramaNovaDetailPag
   if (!detail || !detail.drama_id) {
     notFound();
   }
-  const coverImage = detail.poster || detail.cover || detail.image || '';
+  const coverImage = detail.poster || '';
 
-  const title = detail.name || detail.title || 'Untitled';
-  const epCount = detail.episode_count || detail.chapterCount || 0;
+  const title = detail.title || 'Untitled';
+  const epCount = detail.episode_count || 0;
   const synopsis = cleanSynopsis(detail.description || '');
 
   return (
