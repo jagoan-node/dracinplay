@@ -2,13 +2,12 @@
 
 import { useState } from 'react';
 
-type Platform = 'tiktok' | 'instagram' | 'youtube' | 'terabox';
+type Platform = 'tiktok' | 'instagram' | 'youtube';
 
 const platforms: { key: Platform; label: string; icon: string; color: string }[] = [
   { key: 'youtube', label: 'YouTube', icon: '▶️', color: 'bg-red-500' },
   { key: 'tiktok', label: 'TikTok', icon: '🎵', color: 'bg-black' },
   { key: 'instagram', label: 'Instagram', icon: '📸', color: 'bg-gradient-to-r from-purple-500 to-pink-500' },
-  { key: 'terabox', label: 'TeraBox', icon: '📦', color: 'bg-blue-500' },
 ];
 
 export default function DownloaderPage() {
@@ -24,7 +23,15 @@ export default function DownloaderPage() {
     setError('');
     setResult(null);
     try {
-      const res = await fetch(`/api/sosmed/${platform}?url=${encodeURIComponent(url)}`);
+      let apiUrl = '';
+      if (platform === 'youtube') {
+        apiUrl = '/api/youtube/download?url=' + encodeURIComponent(url);
+      } else if (platform === 'tiktok') {
+        apiUrl = '/api/sosmed/tiktok?url=' + encodeURIComponent(url);
+      } else {
+        apiUrl = '/api/sosmed/instagram?url=' + encodeURIComponent(url);
+      }
+      const res = await fetch(apiUrl);
       const data = await res.json();
       if (data.error) setError(data.error);
       else setResult(data);
@@ -53,22 +60,47 @@ export default function DownloaderPage() {
           {loading ? '...' : 'Download'}
         </button>
       </div>
-      {error && <div className="bg-red-500/20 text-red-300 p-4 rounded-xl mb-4">{error}</div>}
+      {error && <div className="bg-red-500/20 text-red-300 p-4 rounded-xl mb-4">❌ {error}</div>}
       {result && (
         <div className="bg-[#1a1a2e] rounded-xl p-6 border border-white/10">
-          {result.title && <h2 className="text-white font-bold text-lg mb-2">{result.title}</h2>}
-          {result.thumbnail && <img src={result.thumbnail} alt="" className="w-full max-w-md rounded-lg mb-4" />}
-          {result.download_url && (
-            <a href={result.download_url} target="_blank" rel="noopener noreferrer" className="inline-block bg-green-500 text-white px-6 py-3 rounded-xl font-semibold hover:bg-green-600 transition">
-              ⬇️ Download
-            </a>
+          {/* YouTube */}
+          {result.status === 'success' && result.download_link && (
+            <>
+              {result.thumbnail && <img src={result.thumbnail} alt="" className="w-full max-w-md rounded-lg mb-4" />}
+              <h2 className="text-white font-bold text-lg mb-2">{result.title}</h2>
+              <p className="text-gray-400 text-sm mb-4">{result.channel} • {result.quality}p</p>
+              <a href={result.download_link} target="_blank" rel="noopener noreferrer" className="inline-block bg-green-500 text-white px-6 py-3 rounded-xl font-semibold hover:bg-green-600 transition">
+                ⬇️ Download {result.format?.toUpperCase()} ({result.quality}p)
+              </a>
+            </>
           )}
+          {/* TikTok */}
+          {result.data?.hdplay && (
+            <>
+              {result.data.cover && <img src={result.data.cover} alt="" className="w-full max-w-md rounded-lg mb-4" />}
+              <h2 className="text-white font-bold text-lg mb-2">{result.data.title}</h2>
+              <p className="text-gray-400 text-sm mb-4">@{result.data.author?.unique_id} • {result.data.duration}s</p>
+              <div className="flex gap-2 flex-wrap">
+                <a href={result.data.hdplay} target="_blank" rel="noopener noreferrer" className="inline-block bg-green-500 text-white px-6 py-3 rounded-xl font-semibold hover:bg-green-600 transition">
+                  ⬇️ HD No Watermark
+                </a>
+                <a href={result.data.play} target="_blank" rel="noopener noreferrer" className="inline-block bg-blue-500 text-white px-6 py-3 rounded-xl font-semibold hover:bg-blue-600 transition">
+                  ⬇️ Normal Quality
+                </a>
+              </div>
+            </>
+          )}
+          {/* Instagram */}
           {result.video_url && (
-            <div className="mt-4">
-              <video src={result.video_url} controls className="w-full max-w-md rounded-lg" />
-            </div>
+            <>
+              {result.thumbnail && <img src={result.thumbnail} alt="" className="w-full max-w-md rounded-lg mb-4" />}
+              <h2 className="text-white font-bold text-lg mb-2">@{result.username}</h2>
+              {result.description && <p className="text-gray-400 text-sm mb-4">{result.description.slice(0, 100)}</p>}
+              <a href={result.video_url} target="_blank" rel="noopener noreferrer" className="inline-block bg-green-500 text-white px-6 py-3 rounded-xl font-semibold hover:bg-green-600 transition">
+                ⬇️ Download Video
+              </a>
+            </>
           )}
-          <pre className="text-gray-400 text-xs mt-4 overflow-auto">{JSON.stringify(result, null, 2)}</pre>
         </div>
       )}
     </div>

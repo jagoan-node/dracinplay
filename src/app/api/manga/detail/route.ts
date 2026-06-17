@@ -3,7 +3,7 @@ import { NextResponse } from 'next/server';
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   try {
-    const url = new URL('https://api.sonzaix.indevs.in/shinigami/detail/manga');
+    const url = new URL('https://api.sonzaix.indevs.in/shinigami/detail');
     searchParams.forEach((value, key) => {
       url.searchParams.set(key, value);
     });

@@ -3,6 +3,7 @@ import type { NextConfig } from "next";
 const nextConfig: NextConfig = {
   images: {
     remotePatterns: [
+      // Existing domains
       { protocol: 'https', hostname: 'convert.d-cdn.me' },
       { protocol: 'https', hostname: 'assets.d-cdn.me' },
       { protocol: 'https', hostname: 'hwztchapter.dramaboxdb.com' },
@@ -21,6 +22,32 @@ const nextConfig: NextConfig = {
       { protocol: 'https', hostname: '*.ibyteimg.com' },
       { protocol: 'https', hostname: 'static-v1.mydramawave.com' },
       { protocol: 'https', hostname: '*.mydramawave.com' },
+      // New domains from Sonzaix API
+      { protocol: 'https', hostname: 'i0.wp.com' },
+      { protocol: 'https', hostname: '*.wp.com' },
+      { protocol: 'https', hostname: 'cdn.myanimelist.net' },
+      { protocol: 'https', hostname: '*.myanimelist.net' },
+      { protocol: 'https', hostname: 'aasleeimg.yfeitrade.com' },
+      { protocol: 'https', hostname: '*.yfeitrade.com' },
+      { protocol: 'https', hostname: 'acfs1.goodreels.com' },
+      { protocol: 'https', hostname: '*.goodreels.com' },
+      { protocol: 'https', hostname: 'awscover.netshort.com' },
+      { protocol: 'https', hostname: '*.netshort.com' },
+      { protocol: 'https', hostname: 'moviebox.ph' },
+      { protocol: 'https', hostname: '*.moviebox.ph' },
+      { protocol: 'https', hostname: 'pbcdn.aoneroom.com' },
+      { protocol: 'https', hostname: '*.aoneroom.com' },
+      { protocol: 'https', hostname: 's.shortswave.com' },
+      { protocol: 'https', hostname: '*.shortswave.com' },
+      { protocol: 'https', hostname: 'v-mps.crazymaplestudios.com' },
+      { protocol: 'https', hostname: '*.crazymaplestudios.com' },
+      { protocol: 'https', hostname: 'volcengine-forward.shorttv.live' },
+      { protocol: 'https', hostname: '*.shorttv.live' },
+      { protocol: 'https', hostname: 'zshipubcdn.farsunpteltd.com' },
+      { protocol: 'https', hostname: '*.farsunpteltd.com' },
+      { protocol: 'https', hostname: 'images.unsplash.com' },
+      { protocol: 'https', hostname: '*.cloudinary.com' },
+      { protocol: 'https', hostname: '*.tikwm.com' },
     ],
   },
 };
