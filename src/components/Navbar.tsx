@@ -7,9 +7,11 @@ import { useRouter } from 'next/navigation';
 const navLinks = [
   { href: '/', label: 'Home' },
   { href: '/browse', label: 'Browse' },
-  { href: '/browse?filter=china', label: 'China' },
-  { href: '/browse?filter=korea', label: 'Korea' },
   { href: '/short-dramas', label: 'Short Drama' },
+  { href: '/anime', label: 'Anime' },
+  { href: '/moviebox', label: 'MovieBox' },
+  { href: '/manga', label: 'Manga' },
+  { href: '/downloader', label: 'Downloader' },
 ];
 
 export default function Navbar() {
