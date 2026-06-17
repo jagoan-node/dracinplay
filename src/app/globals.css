@@ -4,6 +4,7 @@
   --color-background: #0a0a0f;
   --color-foreground: #ededed;
   --color-card: #1a1a2e;
+  --color-card-hover: #252540;
   --color-accent: #e63946;
   --color-accent-hover: #ff4757;
   --color-muted: #8b8fa3;
@@ -13,44 +14,33 @@
 * {
   scrollbar-width: thin;
   scrollbar-color: #333 #0a0a0f;
+  -webkit-tap-highlight-color: transparent;
 }
 
-*::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
-}
+*::-webkit-scrollbar { width: 6px; height: 6px; }
+*::-webkit-scrollbar-track { background: #0a0a0f; }
+*::-webkit-scrollbar-thumb { background: #333; border-radius: 3px; }
 
-*::-webkit-scrollbar-track {
-  background: #0a0a0f;
-}
-
-*::-webkit-scrollbar-thumb {
-  background: #333;
-  border-radius: 3px;
+html {
+  scroll-behavior: smooth;
+  -webkit-text-size-adjust: 100%;
 }
 
 body {
   background: var(--color-background);
   color: var(--color-foreground);
   font-family: var(--font-sans);
+  overscroll-behavior: none;
 }
 
-.hide-scrollbar {
-  -ms-overflow-style: none;
-  scrollbar-width: none;
-}
+/* Hide scrollbar utility */
+.hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+.hide-scrollbar::-webkit-scrollbar { display: none; }
 
-.hide-scrollbar::-webkit-scrollbar {
-  display: none;
-}
-
+/* Shimmer skeleton animation */
 @keyframes shimmer {
-  0% {
-    background-position: -200% 0;
-  }
-  100% {
-    background-position: 200% 0;
-  }
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
 }
 
 .skeleton {
@@ -58,4 +48,95 @@ body {
   background-size: 200% 100%;
   animation: shimmer 1.5s ease-in-out infinite;
   border-radius: 8px;
+}
+
+/* Fade in/out for seek indicator */
+@keyframes fadeInOut {
+  0% { opacity: 0; transform: scale(0.8); }
+  20% { opacity: 1; transform: scale(1); }
+  80% { opacity: 1; transform: scale(1); }
+  100% { opacity: 0; transform: scale(0.8); }
+}
+.animate-fade-in-out { animation: fadeInOut 0.6s ease-in-out; }
+
+/* Slide up entrance */
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.animate-slide-up { animation: slideUp 0.4s ease-out; }
+
+/* Stagger children animation */
+@keyframes staggerIn {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.stagger-item {
+  opacity: 0;
+  animation: staggerIn 0.35s ease-out forwards;
+}
+
+/* Pulse glow for active items */
+@keyframes pulseGlow {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(230, 57, 70, 0.4); }
+  50% { box-shadow: 0 0 0 6px rgba(230, 57, 70, 0); }
+}
+.animate-pulse-glow { animation: pulseGlow 2s infinite; }
+
+/* Card hover lift effect */
+.card-hover {
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+.card-hover:hover, .card-hover:active {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
+}
+.card-hover:active { transform: scale(0.97); }
+
+/* Horizontal scroll container for episodes */
+.scroll-x {
+  display: flex;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  -webkit-overflow-scrolling: touch;
+  gap: 0.5rem;
+  padding-bottom: 0.5rem;
+}
+.scroll-x > * { scroll-snap-align: start; flex-shrink: 0; }
+.scroll-x::-webkit-scrollbar { height: 0; }
+
+/* Safe area padding for mobile notch */
+.safe-top { padding-top: env(safe-area-inset-top); }
+.safe-bottom { padding-bottom: env(safe-area-inset-bottom); }
+
+/* Touch-friendly button minimum size */
+.touch-target { min-width: 44px; min-height: 44px; display: flex; align-items: center; justify-content: center; }
+
+/* Line clamp utilities */
+.line-clamp-1 { overflow: hidden; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 1; }
+.line-clamp-2 { overflow: hidden; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; }
+.line-clamp-3 { overflow: hidden; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 3; }
+
+/* Bottom nav spacing */
+@media (max-width: 768px) {
+  main { padding-bottom: 4.5rem; }
+}
+
+/* Smooth page transitions */
+.page-enter {
+  animation: slideUp 0.3s ease-out;
+}
+
+/* Glass morphism utility */
+.glass {
+  background: rgba(26, 26, 46, 0.8);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+/* Focus visible for accessibility */
+:focus-visible {
+  outline: 2px solid #e63946;
+  outline-offset: 2px;
+  border-radius: 4px;
 }

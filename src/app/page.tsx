@@ -1,5 +1,5 @@
 'use client';
-// @ts-nocheck
+
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import ShortDramaCard from '@/components/ShortDramaCard';
@@ -14,9 +14,9 @@ interface Section {
 }
 
 const featureCards = [
-  { title: '🎬 Short Drama', desc: '11 providers, ribuan drama pendek', href: '/short-dramas', color: 'from-[#e63946] to-[#ff6b6b]' },
-  { title: '📺 Anime', desc: 'Nonton anime subtitle Indonesia', href: '/anime', color: 'from-red-600 to-red-400' },
-  { title: '🎥 MovieBox', desc: 'Film dan series terbaru', href: '/moviebox', color: 'from-yellow-600 to-yellow-400' },
+  { title: '🎬 Short Drama', desc: '11 providers, ribuan drama', href: '/short-dramas', color: 'from-[#e63946] to-[#ff6b6b]' },
+  { title: '📺 Anime', desc: 'Anime subtitle Indonesia', href: '/anime', color: 'from-red-600 to-red-400' },
+  { title: '🎥 MovieBox', desc: 'Film & series terbaru', href: '/moviebox', color: 'from-yellow-600 to-yellow-400' },
   { title: '📖 Manga', desc: 'Baca manga terupdate', href: '/manga', color: 'from-green-600 to-green-400' },
   { title: '⬇️ Downloader', desc: 'Download video sosmed', href: '/downloader', color: 'from-purple-600 to-purple-400' },
 ];
@@ -27,9 +27,9 @@ export default function HomePage() {
 
   useEffect(() => {
     async function loadSections() {
-      const sectionConfigs = [
-        { title: '🔥 Melolo Short Drama', provider: 'melolo', color: '#e63946', link: '/short/melolo/all' },
-        { title: '🌊 FreeReels Short Drama', provider: 'freereels', color: '#06b6d4', link: '/short/freereels/all' },
+      const configs = [
+        { title: '🔥 Melolo', provider: 'melolo', color: '#e63946', link: '/short/melolo/all' },
+        { title: '🌊 FreeReels', provider: 'freereels', color: '#06b6d4', link: '/short/freereels/all' },
         { title: '📦 DramaBox', provider: 'dramabox', color: '#a855f7', link: '/short/dramabox/all' },
         { title: '🎬 DramaWave', provider: 'dramawave', color: '#f59e0b', link: '/short/dramawave/all' },
         { title: '✨ DramaNova', provider: 'dramanova', color: '#10b981', link: '/short/dramanova/all' },
@@ -42,117 +42,59 @@ export default function HomePage() {
       ];
 
       const results: Section[] = [];
-
-      for (const config of sectionConfigs) {
+      await Promise.all(configs.map(async (config) => {
         try {
           const res = await fetch(`/api/short/${config.provider}/home`);
           const data = await res.json();
           let dramas: NormalizedShortDrama[] = [];
+          const raw = data.data || data;
 
-          // Normalize based on provider
-          if (config.provider === 'melolo' || config.provider === 'freereels') {
-            const books = (data.data || []).flatMap((s: Record<string, unknown>) => s.books || []);
-            dramas = (books as Record<string, unknown>[]).map((b) => ({
-              id: (b.drama_id as string) || '',
-              title: (b.drama_name as string) || 'Untitled',
-              cover: (b.thumb_url as string) || '',
-              description: (b.description as string) || '',
-              episodeCount: (b.episode_count as number) || 0,
-              tags: (b.tags as string[]) || [],
-              provider: config.provider,
+          if (Array.isArray(raw)) {
+            const books = raw.flatMap((s: Record<string, unknown>) => (s.books as Record<string, unknown>[]) || []);
+            dramas = (books as Record<string, unknown>[]).map(b => ({
+              id: (b.drama_id as string) || '', title: (b.drama_name as string) || 'Untitled',
+              cover: (b.thumb_url as string) || '', description: (b.description as string) || '',
+              episodeCount: (b.episode_count as number) || 0, tags: (b.tags as string[]) || [], provider: config.provider,
             }));
-          } else if (config.provider === 'dramabox') {
-            const cols = data.data?.columnVoList || [];
-            const books = cols.flatMap((c: Record<string, unknown>) => c.bookList || []);
-            dramas = (books as Record<string, unknown>[]).map((b) => ({
-              id: (b.bookId as string) || '',
-              title: (b.bookName as string) || 'Untitled',
-              cover: (b.coverWap as string) || '',
-              description: (b.introduction as string) || '',
-              episodeCount: (b.chapterCount as number) || 0,
-              tags: (b.tags as string[]) || [],
-              provider: config.provider,
+          } else if (raw.recommentList) {
+            dramas = raw.recommentList.map((b: Record<string, unknown>) => ({
+              id: (b.id as string) || '', title: (b.name as string) || (b.title as string) || 'Untitled',
+              cover: (b.cover as string) || (b.thumb_url as string) || '', description: (b.description as string) || '',
+              episodeCount: (b.chapterCount as number) || 0, tags: (b.tags as string[]) || [], provider: config.provider,
             }));
-          } else if (config.provider === 'dramawave') {
-            dramas = (data.data?.items || []).map((b: Record<string, unknown>) => ({
-              id: (b.id as string) || '',
-              title: (b.name as string) || (b.title as string) || 'Untitled',
-              cover: (b.cover as string) || '',
-              description: (b.description as string) || '',
-              episodeCount: (b.episode_count as number) || 0,
-              tags: (b.tags as string[]) || [],
-              provider: config.provider,
+          } else if (raw.columnVoList) {
+            const books = raw.columnVoList.flatMap((c: Record<string, unknown>) => (c.bookList as Record<string, unknown>[]) || []);
+            dramas = books.map((b: Record<string, unknown>) => ({
+              id: (b.bookId as string) || '', title: (b.bookName as string) || 'Untitled',
+              cover: (b.coverWap as string) || '', description: (b.introduction as string) || '',
+              episodeCount: (b.chapterCount as number) || 0, tags: (b.tags as string[]) || [], provider: config.provider,
             }));
-          } else if (config.provider === 'dramanova') {
-            for (const mod of ['newDramas', 'hotDramas', 'recommendDramas']) {
-              const items = data.data?.[mod]?.items || [];
-              dramas.push(...(items as Record<string, unknown>[]).map((b) => ({
-                id: (b.id as string) || '',
-                title: (b.name as string) || 'Untitled',
-                cover: (b.cover as string) || '',
-                description: (b.description as string) || '',
-                episodeCount: (b.episode_count as number) || 0,
-                tags: (b.tags as string[]) || [],
-                provider: config.provider,
-              })));
-            }
-          } else if (config.provider === 'goodshort') {
-            dramas = (data.data?.recommentList || []).map((b: Record<string, unknown>) => ({
-              id: (b.id as string) || '',
-              title: (b.name as string) || (b.title as string) || 'Untitled',
-              cover: (b.cover as string) || (b.thumb_url as string) || '',
-              description: (b.description as string) || '',
-              episodeCount: (b.chapterCount as number) || 0,
-              tags: (b.tags as string[]) || [],
-              provider: config.provider,
+          } else if (raw.items) {
+            dramas = raw.items.map((b: Record<string, unknown>) => ({
+              id: (b.id as string) || '', title: (b.name as string) || (b.title as string) || 'Untitled',
+              cover: (b.cover as string) || '', description: (b.description as string) || '',
+              episodeCount: (b.episode_count as number) || 0, tags: (b.tags as string[]) || [], provider: config.provider,
             }));
           } else {
-            // Generic for new providers
-            const d = data.data || data;
-            let allBooks: any[] = [];
-            if (Array.isArray(d)) {
-              // eslint-disable-next-line @typescript-eslint/no-explicit-any
-              allBooks = (d as any[]).flatMap((s: any) => s.books || s.items || [s]);
-            } else if (typeof d === 'object') {
-              const sections = (d as any).sections || (d as any).modules || (d as any).columnVoList || [];
-              if (Array.isArray(sections)) {
-                allBooks = (sections as any[]).flatMap((s: any) => s.books || s.items || s.bookList || []);
-              }
-              if (allBooks.length === 0) {
-                allBooks = (d as any).items || (d as any).recommentList || (d as any).dramas || [];
-              }
-              if (allBooks.length === 0) {
-                for (const key of Object.keys(d as Record<string, unknown>)) {
-                  const val = (d as any)[key];
-                  if (val && typeof val === 'object' && 'items' in val) {
-                    allBooks.push(...(val.items || []));
-                  }
-                }
-              }
+            for (const mod of ['newDramas', 'hotDramas', 'recommendDramas']) {
+              const items = raw[mod]?.items || [];
+              dramas.push(...items.map((b: Record<string, unknown>) => ({
+                id: (b.id as string) || '', title: (b.name as string) || 'Untitled',
+                cover: (b.cover as string) || '', description: (b.description as string) || '',
+                episodeCount: (b.episode_count as number) || 0, tags: (b.tags as string[]) || [], provider: config.provider,
+              })));
             }
-            dramas = allBooks.map((b) => ({
-              id: (b.drama_id as string) || (b.bookId as string) || (b.id as string) || '',
-              title: (b.drama_name as string) || (b.bookName as string) || (b.name as string) || (b.title as string) || 'Untitled',
-              cover: (b.thumb_url as string) || (b.cover as string) || (b.coverWap as string) || (b.image as string) || '',
-              description: (b.description as string) || '',
-              episodeCount: (b.episode_count as number) || (b.chapterCount as number) || 0,
-              tags: (b.tags as string[]) || [],
-              provider: config.provider,
-            }));
           }
 
           if (dramas.length > 0) {
-            results.push({
-              title: config.title,
-              provider: config.provider,
-              color: config.color,
-              link: config.link,
-              data: dramas.slice(0, 10),
-            });
+            results.push({ title: config.title, provider: config.provider, color: config.color, link: config.link, data: dramas.slice(0, 10) });
           }
         } catch { /* skip */ }
-      }
+      }));
 
+      // Sort to match config order
+      const order = configs.map(c => c.provider);
+      results.sort((a, b) => order.indexOf(a.provider) - order.indexOf(b.provider));
       setSections(results);
       setLoading(false);
     }
@@ -160,77 +102,83 @@ export default function HomePage() {
   }, []);
 
   return (
-    <div className="min-h-screen py-6 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
-      {/* Hero Section */}
-      <div className="text-center mb-12">
-        <h1 className="text-4xl md:text-5xl font-bold text-white mb-4">
-          Nonton <span className="text-[#e63946]">Drama</span> Gratis
-        </h1>
-        <p className="text-gray-400 text-lg mb-6 max-w-2xl mx-auto">
-          Streaming drama China, Korea, Short Drama, Anime, Movie, dan Manga favorit kamu secara gratis.
-          Kualitas HD, subtitle Indonesia, update setiap hari.
-        </p>
-        <div className="flex flex-wrap justify-center gap-3">
-          <Link href="/short-dramas" className="px-6 py-3 bg-[#e63946] text-white rounded-xl font-medium hover:bg-[#ff4757] transition-all">
-            🎬 Short Drama
-          </Link>
-          <Link href="/anime" className="px-6 py-3 bg-red-600 text-white rounded-xl font-medium hover:bg-red-500 transition-all">
-            📺 Anime
-          </Link>
-          <Link href="/moviebox" className="px-6 py-3 bg-yellow-600 text-white rounded-xl font-medium hover:bg-yellow-500 transition-all">
-            🎥 MovieBox
-          </Link>
-          <Link href="/manga" className="px-6 py-3 bg-green-600 text-white rounded-xl font-medium hover:bg-green-500 transition-all">
-            📖 Manga
-          </Link>
-          <Link href="/browse" className="px-6 py-3 bg-[#1a1a2e] text-white rounded-xl font-medium border border-white/10 hover:bg-[#252540] transition-all">
-            📖 Browse Drama
-          </Link>
+    <div className="min-h-screen pb-4">
+      {/* Hero */}
+      <div className="relative overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-b from-[#e63946]/10 via-transparent to-transparent" />
+        <div className="relative px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto pt-8 pb-10 text-center">
+          <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold text-white mb-3 animate-slide-up">
+            Nonton <span className="text-[#e63946]">Drama</span> Gratis
+          </h1>
+          <p className="text-gray-400 text-sm sm:text-base md:text-lg mb-6 max-w-2xl mx-auto animate-slide-up" style={{ animationDelay: '100ms' }}>
+            Streaming drama China, Korea, Short Drama, Anime, Movie, dan Manga favorit kamu. HD, subtitle Indonesia, update tiap hari.
+          </p>
+          <div className="flex flex-wrap justify-center gap-2 sm:gap-3 animate-slide-up" style={{ animationDelay: '200ms' }}>
+            <Link href="/short-dramas" className="px-4 sm:px-6 py-2.5 sm:py-3 bg-[#e63946] text-white rounded-xl font-medium hover:bg-[#ff4757] transition-all text-sm sm:text-base">
+              🎬 Short Drama
+            </Link>
+            <Link href="/anime" className="px-4 sm:px-6 py-2.5 sm:py-3 bg-red-600 text-white rounded-xl font-medium hover:bg-red-500 transition-all text-sm sm:text-base">
+              📺 Anime
+            </Link>
+            <Link href="/moviebox" className="px-4 sm:px-6 py-2.5 sm:py-3 bg-yellow-600 text-white rounded-xl font-medium hover:bg-yellow-500 transition-all text-sm sm:text-base">
+              🎥 MovieBox
+            </Link>
+          </div>
         </div>
       </div>
 
       {/* Feature Cards */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3 mb-12">
-        {featureCards.map((card) => (
-          <Link key={card.href} href={card.href} className={`bg-gradient-to-br ${card.color} rounded-xl p-4 text-center hover:scale-[1.03] transition-transform`}>
-            <h3 className="text-white font-bold text-sm mb-1">{card.title}</h3>
-            <p className="text-white/80 text-xs">{card.desc}</p>
-          </Link>
-        ))}
+      <div className="px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto mb-10">
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2 sm:gap-3">
+          {featureCards.map((card, i) => (
+            <Link key={card.href} href={card.href} className={`bg-gradient-to-br ${card.color} rounded-xl p-3 sm:p-4 text-center card-hover stagger-item`} style={{ animationDelay: `${i * 60}ms` }}>
+              <h3 className="text-white font-bold text-sm sm:text-base mb-0.5">{card.title}</h3>
+              <p className="text-white/80 text-xs">{card.desc}</p>
+            </Link>
+          ))}
+        </div>
       </div>
 
       {/* Drama Sections */}
-      {loading ? (
-        <div className="space-y-8">
-          {[1, 2, 3].map((i) => (
-            <div key={i} className="animate-pulse">
-              <div className="h-6 bg-[#1a1a2e] rounded w-48 mb-4" />
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
-                {[1, 2, 3, 4, 5].map((j) => <div key={j} className="aspect-[3/4] bg-[#1a1a2e] rounded-xl" />)}
+      <div className="px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
+        {loading ? (
+          <div className="space-y-8">
+            {[1, 2, 3].map(i => (
+              <div key={i} className="animate-pulse">
+                <div className="h-6 bg-[#1a1a2e] rounded w-40 mb-4" />
+                <div className="flex gap-3 overflow-hidden">
+                  {[1, 2, 3, 4, 5].map(j => <div key={j} className="w-36 sm:w-44 aspect-[2/3] bg-[#1a1a2e] rounded-xl shrink-0" />)}
+                </div>
               </div>
-            </div>
-          ))}
-        </div>
-      ) : sections.length === 0 ? (
-        <div className="text-center py-20">
-          <p className="text-gray-500 text-lg">Tidak ada drama tersedia saat ini.</p>
-          <Link href="/short-dramas" className="text-[#e63946] hover:underline mt-4 inline-block">Lihat Short Drama →</Link>
-        </div>
-      ) : (
-        <div className="space-y-12">
-          {sections.map((section) => (
-            <section key={section.provider}>
-              <div className="flex items-center justify-between mb-4">
-                <h2 className="text-xl md:text-2xl font-bold text-white">{section.title}</h2>
-                <Link href={section.link} className="text-sm text-gray-400 hover:text-white transition-colors">Lihat Semua →</Link>
-              </div>
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
-                {section.data.map((drama) => <ShortDramaCard key={drama.id} drama={drama} />)}
-              </div>
-            </section>
-          ))}
-        </div>
-      )}
+            ))}
+          </div>
+        ) : sections.length === 0 ? (
+          <div className="text-center py-16">
+            <p className="text-gray-500 text-lg mb-4">Tidak ada drama tersedia</p>
+            <Link href="/short-dramas" className="text-[#e63946] hover:underline">Lihat Short Drama →</Link>
+          </div>
+        ) : (
+          <div className="space-y-10">
+            {sections.map((section) => (
+              <section key={section.provider} className="stagger-item">
+                <div className="flex items-center justify-between mb-3">
+                  <h2 className="text-lg sm:text-xl md:text-2xl font-bold text-white">{section.title}</h2>
+                  <Link href={section.link} className="text-xs sm:text-sm text-gray-400 hover:text-white transition-colors flex items-center gap-1">
+                    Semua <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
+                  </Link>
+                </div>
+                <div className="flex gap-3 overflow-x-auto hide-scrollbar pb-2">
+                  {section.data.map(drama => (
+                    <div key={drama.id} className="w-36 sm:w-44 shrink-0">
+                      <ShortDramaCard drama={drama} />
+                    </div>
+                  ))}
+                </div>
+              </section>
+            ))}
+          </div>
+        )}
+      </div>
     </div>
   );
 }

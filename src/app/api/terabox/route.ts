@@ -2,12 +2,9 @@ import { NextResponse } from 'next/server';
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
+  const url = searchParams.get('url');
   try {
-    const url = new URL('https://api.sonzaix.indevs.in/anime/detail');
-    searchParams.forEach((value, key) => {
-      url.searchParams.set(key, value);
-    });
-    const res = await fetch(url.toString());
+    const res = await fetch('https://api.sonzaix.indevs.in/terabox?url=' + encodeURIComponent(url || ''));
     const data = await res.json();
     return NextResponse.json(data);
   } catch {
